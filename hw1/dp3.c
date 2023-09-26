@@ -14,6 +14,7 @@ float dp(long N, float *pA, float *pB) {
         R += pA[j]*pB[j];
     return R;
 }
+/*  */
 
 int main(int argc, char *argv[]) {
 
@@ -26,19 +27,32 @@ int main(int argc, char *argv[]) {
         pB[i]=1.0;
     }
     int n_iter = atoi(argv[2]); 
-    float mean = 0.0;
+    int warmup = n_iter/2 ;
+    float dp_out=0.0;
+    double mean = 0.0;
     for (int i = 0; i < n_iter; i++) {
         struct timespec f_start;
         struct timespec f_end;
         clock_gettime(CLOCK_MONOTONIC, &f_start);
-        //float R = dp(dim, pA, pB);
-        float R = bdp(dim, pA, pB);
+        float tmp = bdp(dim, pA, pB);
         clock_gettime(CLOCK_MONOTONIC, &f_end);
-        float tdiff = f_end.tv_nsec - f_start.tv_nsec;
-        mean+=tdiff;
+        if(i > warmup){
+            double nsec_tdiff = (f_end.tv_nsec - f_start.tv_nsec)/1000000000.0;
+            double sec_tdiff = f_end.tv_sec -f_start.tv_sec;
+            double total_time = sec_tdiff + nsec_tdiff;
+            
+            mean+=total_time;
+            
+        }
+        dp_out = tmp;
     }
-    mean = mean/n_iter;
-    printf("average run time: %f \n", mean);
+    mean = mean/warmup;
+    // report GFlops bc its easier to read 
+    double flops = 2*dim / mean/1000000000;
+    // wants GB per second so cancels out nanoseconds
+    double bandwidth = 8*dim / mean/1000000000 ;
+    printf("N: %ld\tT: %.12f sec\tB: %.12f GB/sec\tF: %.12f GFLOP/s\n",dim,  mean, bandwidth,flops);
+    printf("dp_out: %.12f\n", dp_out);
     free(pA); // Free dynamically allocated memory
     free(pB);
     return 0; 
