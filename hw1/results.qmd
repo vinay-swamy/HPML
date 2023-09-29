@@ -1,5 +1,6 @@
 ---
 title: "Homework 1 "
+author: "Vinay Swamy"
 format: pdf
 ---
 
@@ -10,7 +11,9 @@ format: pdf
 gcc -Wall -O3 -o dp1 dp1.c 
 gcc -Wall -O3 -o dp2 dp2.c 
 . /opt/intel/oneapi/setvars.sh
-gcc -Wall -O3 -o dp3 -I /opt/intel/oneapi/mkl/2022.2.0/include dp3.c -L /opt/intel/oneapi/mkl/2022.2.0/lib -lmkl_rt
+gcc -Wall -O3 -o dp3 \
+  -I /opt/intel/oneapi/mkl/2022.2.0/include dp3.c \
+  -L /opt/intel/oneapi/mkl/2022.2.0/lib -lmkl_rt
 ```
 
 ## C1
@@ -24,8 +27,12 @@ float dp(long N, float *pA, float *pB) {
     return R;
 }
 ```
-FLOPs: 2 per iteration(add, multiply), so 2N flops (ignoring the iterator)
+
+FLOPs: 2 per iteration(add, multiply), so 2N flops 
+
 traffic: 2 accessing vectors @ 4 bytes each so 8N bytes( assuming R is kept in the cache)
+
+Arithmetic Intensity: 2N/8N = 1/4
 
 
 ```{bash}
@@ -55,7 +62,7 @@ return R; }
 ```
 FLOPS: 4 mults, 4 adds, so 8N/4 =2N ops 
 traffic: 8 float reads, so 32N/4 =8N bytes
-
+Arithmetic Intensity: 2N/8N = 1/4
 
 ```{bash}
 ./dp2 1000000 1000
@@ -72,6 +79,15 @@ N: 300000000    T: 0.131516230800 sec   B: 18.248698167527 GB/sec       F: 4.562
 dp_out: 67108864.000000000000
 
 ## C3
+
+```
+#include <mkl_cblas.h>
+float bdp(long N, float *pA, float *pB) {
+  float R = cblas_sdot(N, pA, 1, pB, 1);
+return R; }
+```
+
+FLOPS/traffic/AI should be the same as before 
 
 ```{bash}
 ./dp3 1000000 1000
@@ -116,8 +132,8 @@ python dp5.py 300000000 10
 N: 300000000    T: 0.1432159034 sec     B: 16.757915448096806 GB/sec    F: 4.189478862024202 GFLOP/s
 
 ## Q1
-(Need expanding)
-Things already in the cache; initial compiling of python code to byte code 
+
+One reason would be for would be for when running the python code, the interpreter must compile the code to byte code before running it. Another reason, is that on the initial run, there may already be data in the cache, so that will need to be cleared before the actual computation can be done. 
 
 ## Q2
 
@@ -156,7 +172,6 @@ line_df["y"][line_df["y"] >=200]=200
 
 Zoomed in 
 
-
 ```{python}
 (
   pn.ggplot() + 
@@ -175,14 +190,19 @@ Zoomed in
 ```
 
 ## Q3
-C1 - baseline
-C2 - Given that the copmutation is memory bound, the unrolling of the loop allows more memory to be loaded to the CPU at once, and thus the computation is faster.
+
+C2 - Given that the computation is memory bound, the unrolling of the loop allows more memory to be loaded to the CPU at once, and thus the computation is faster.
+
 C3 - The MKL library is able to use SIMD/vectorized instructions to perform the computation faster than the baseline.
-C4 - The slowest of all, theh overhead of compiling and interpreting the loop over and over again leads to huge slowdowns. 
-C5 - This uses numpy, and since numpy is written in C and fortran, it circumvents the overhead of the python interpreter.
+
+C4 - The slowest of all, the overhead of compiling and interpreting the loop over and over again 
+leads to huge slowdowns. 
+
+C5 - This uses numpy, and since numpy is written in C and fortran, it circumvents the overhead of the python interpreter, and may have similar optimization to the MKL library.
 
 ## Q4
-Calculation is fine for the 1M run, but for the 300M, looks like there's an overflow error for C1 and C2; C3 seems to work fine, so the MKL libary must be doing something to prevent overflow errors.
+
+Across the runs, the calculations are fine for the 1M run, but for the 300M, looks like there's an overflow error for C1 and C2; C3 seems to work fine, so the MKL libary must be doing something to prevent overflow errors.
 
 
 
