@@ -1,0 +1,274 @@
+---
+title: "Homework 1 "
+author: "Vinay Swamy"
+format: pdf
+---
+
+Note: I used a different compute cluster, the one my lab uses, as I already had everything installed.
+
+## C1
+
+Profiler Tensorboard output
+
+![](imgs/C1.png)
+
+## C2
+```{bash}
+python lab2.py 
+```
+
+Average DataLoading time: 0.03741896399794872 s
+
+Average MiniBatch time: 0.022893894838461538 s
+
+Average epoch time: 23.719304454 s
+
+Profiler Tensorboard output
+
+
+![](imgs/C2.png)
+
+## C3
+
+```{bash}
+python lab2.py --num-workers 0
+```
+
+Average DataLoading time: 0.041666720254358976 s
+
+
+```{bash}
+python lab2.py --num-workers 4
+```
+
+Average DataLoading time: 0.00019926376153846156 s
+
+
+```{bash}
+python lab2.py --num-workers 8
+```
+
+Average DataLoading time: 0.00019482311025641026 s
+
+```{bash}
+python lab2.py --num-workers 12
+```
+
+Average DataLoading time: 0.00031568150307692306 s
+
+```{bash}
+python lab2.py --num-workers 16
+```
+
+Average DataLoading time: 0.00042006267897435896 s
+
+8 Workers seems to be the best. 
+
+Profiler Tensorboard output
+
+
+![](imgs/C3.png)
+
+## C4
+
+```{bash}
+python lab2.py --num-workers 1
+```
+
+Average DataLoading time: 0.004176115000512821 s
+
+Average MiniBatch time: 0.02301773109948718 s 
+
+Average epoch time: 10.795650754 s
+
+```{bash}
+python lab2.py --num-workers 8
+```
+
+Average DataLoading time: 0.00019482311025641026 s
+
+Average MiniBatch time: 0.023374080662051284 s
+
+Average epoch time: 9.3957219906 s
+
+The run time gain is about 1.4 seconds, and is due to the increased parallelization of reading and transforming the image data from disk via the increased number of dataloading workers, allowing for batches to be generated faster.
+
+Profiler Tensorboard output
+
+![](imgs/C4.png)
+
+## C5 
+
+```{bash}
+python lab2.py --num-workers 8
+```
+
+
+Average epoch run time: 9.3957219906 s
+
+```{bash}
+python lab2.py --num-workers 8 --device "cpu"
+```
+
+Average epoch run time: 231.589331098 s
+
+Profiler Tensorboard output
+
+![](imgs/C5.png)
+
+## C6
+
+```{python}
+#| echo: false
+import pandas as pd 
+from io import StringIO
+def pprint_table(string):
+    df = pd.read_csv(StringIO(string), sep=",", 
+        names=["epoch", "run time", "Avg Loss", "accuracy"])  
+
+    print(df.to_markdown(index=False))
+```
+
+### SGD
+
+```{python}
+#| echo: false
+#| output: asis
+pprint_table("""epoch 0,10.738158265,1.5956729440139613,0.38741473592546925
+epoch 1,9.247090134,1.4362038768254795,0.47249600291252136
+epoch 2,9.273167491,1.1680812876958113,0.5758814215660095
+epoch 3,9.368184477,0.9711087145866492,0.6534455418586731
+epoch 4,9.306242313,0.830351725144264,0.7074919939041138
+""")
+```
+
+
+### Nesterov
+
+```{python}
+#| echo: false
+#| output: asis
+pprint_table('''epoch 0,9.621529617,1.915281440050174,0.32015225291252136
+epoch 1,9.292013676,1.3684051096439362,0.5003004670143127
+epoch 2,9.300374785,1.0902760200011425,0.6093950271606445
+epoch 3,9.361459965,0.9276491568638728,0.6730769276618958
+epoch 4,9.357522318,0.82091053602023,0.7095353007316589''')
+
+```
+
+### Adagrad
+
+```{python}
+#| echo: false
+#| output: asis
+pprint_table('''epoch 0,9.577870485,2.1974797835716835,0.2311498522758484
+epoch 1,9.353179071,1.7205359630095654,0.353145033121109
+epoch 2,9.355479469,1.4899379024138817,0.45002004504203796
+epoch 3,9.357960879,1.2763163193678244,0.5363782048225403
+epoch 4,9.413843447,1.0712563068438798,0.618870198726654''')
+```
+
+### Adadelta
+
+```{python}
+#| echo: false
+#| output: asis
+pprint_table("""epoch 0,10.023030805,1.3699077071287693,0.49845755100250244
+epoch 1,9.764879231,0.8597415977563614,0.6959335207939148
+epoch 2,9.795118317,0.6694075309313261,0.7666266560554504
+epoch 3,9.823959063,0.5658913678083665,0.8038261532783508
+epoch 4,9.837001321,0.4896759669750165,0.8307692408561707""")
+```
+
+### Adam
+
+
+```{python}
+#| echo: false
+#| output: asis
+pprint_table("""epoch 0,10.330652782,2.2483520043201937,0.23070913553237915
+epoch 1,9.403550289,1.8502911255909846,0.2911057770252228
+epoch 2,9.420973312,1.8305468308619963,0.2988581955432892
+epoch 3,9.424799049,1.8160927292628166,0.3021634817123413
+epoch 4,9.446841698,1.800605240234962,0.3082732558250427""")
+```
+
+
+## C7
+
+```{bash}
+python lab2.py --num-workers 8 --disable-batchnorm
+```
+
+```{python}
+#| echo: false
+#| output: asis
+pprint_table('''epoch 0,8.107239746,1.9235792208940554,0.268108993768692
+epoch 1,7.758029067,1.5326244632403057,0.43289265036582947
+epoch 2,7.776239332,1.3188409569935922,0.5245593190193176
+epoch 3,7.77093441,1.14023000170023,0.5991185903549194
+epoch 4,7.81626914,0.9746284102782224,0.6604968309402466''')
+```
+
+## Q1
+
+The model has 20 Convolutional layers.
+
+## Q2
+
+The last linear layer has an input dim of 512.
+
+## Q3
+
+The number of trainable parameters is the same as the number of gradients. Additionally, the choice of optimizer does not affect the number of trainable parameters/gradients, as the optimizer only affects the update rule for the parameters.
+
+```{python}
+#|eval: False
+model = ResNet18()
+trainable_params = 0
+for param in model.parameters():
+    if param.requires_grad:
+        trainable_params += param.numel()
+print(trainable_params)
+
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+trainset = torchvision.datasets.CIFAR10(
+            root='/pmglocal/vss2134/cifar10/train', train=True, download=True, transform=transform_train)
+train_dl = torch.utils.data.DataLoader(
+    trainset,
+    batch_size = 128,
+    shuffle = True, 
+    drop_last = True,
+    num_workers = self.num_workers,
+    pin_memory = self.device == "cuda"
+    )
+x,y = next(iter(train_dl))
+x = x.to(self.device)
+y = y.to(self.device)
+optimizer.zero_grad()
+out = model(x)
+loss = F.cross_entropy(out, y)
+loss.backward()
+optimizer.step()
+grads = 0
+for param in self.cnn.parameters():
+    if param.requires_grad:
+        grads += param.grad.numel()
+## total number of gradients
+```
+
+SGD
+
+num params: 11173962
+
+num grads: 11173962
+
+## Q4
+
+I used the above code but with the ADAM optimizer, and found the results to be the same as SGD.
+
+Adam
+
+num params: 11173962
+
+num grads: 11173962
