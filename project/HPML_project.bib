@@ -1,0 +1,161 @@
+
+@article{rives_biological_2021,
+	title = {Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences},
+	volume = {118},
+	url = {https://www.pnas.org/doi/10.1073/pnas.2016239118},
+	doi = {10.1073/pnas.2016239118},
+	abstract = {In the field of artificial intelligence, a combination of scale in data and model capacity enabled by unsupervised learning has led to major advances in representation learning and statistical generation. In the life sciences, the anticipated growth of sequencing promises unprecedented data on natural sequence diversity. Protein language modeling at the scale of evolution is a logical step toward predictive and generative artificial intelligence for biology. To this end, we use unsupervised learning to train a deep contextual language model on 86 billion amino acids across 250 million protein sequences spanning evolutionary diversity. The resulting model contains information about biological properties in its representations. The representations are learned from sequence data alone. The learned representation space has a multiscale organization reflecting structure from the level of biochemical properties of amino acids to remote homology of proteins. Information about secondary and tertiary structure is encoded in the representations and can be identified by linear projections. Representation learning produces features that generalize across a range of applications, enabling state-of-the-art supervised prediction of mutational effect and secondary structure and improving state-of-the-art features for long-range contact prediction.},
+	pages = {e2016239118},
+	number = {15},
+	journaltitle = {Proceedings of the National Academy of Sciences},
+	author = {Rives, Alexander and Meier, Joshua and Sercu, Tom and Goyal, Siddharth and Lin, Zeming and Liu, Jason and Guo, Demi and Ott, Myle and Zitnick, C. Lawrence and Ma, Jerry and Fergus, Rob},
+	urldate = {2023-10-31},
+	date = {2021-04-13},
+	note = {Publisher: Proceedings of the National Academy of Sciences},
+	file = {Full Text PDF:/Users/vinayswamy/Zotero/storage/5JZCTBKD/Rives et al. - 2021 - Biological structure and function emerge from scal.pdf:application/pdf},
+}
+
+@misc{dao_flashattention_2022,
+	title = {{FlashAttention}: Fast and Memory-Efficient Exact Attention with {IO}-Awareness},
+	url = {http://arxiv.org/abs/2205.14135},
+	shorttitle = {{FlashAttention}},
+	abstract = {Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms {IO}-aware -- accounting for reads and writes between levels of {GPU} memory. We propose {FlashAttention}, an {IO}-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between {GPU} high bandwidth memory ({HBM}) and {GPU} on-chip {SRAM}. We analyze the {IO} complexity of {FlashAttention}, showing that it requires fewer {HBM} accesses than standard attention, and is optimal for a range of {SRAM} sizes. We also extend {FlashAttention} to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. {FlashAttention} trains Transformers faster than existing baselines: 15\% end-to-end wall-clock speedup on {BERT}-large (seq. length 512) compared to the {MLPerf} 1.1 training speed record, 3\${\textbackslash}times\$ speedup on {GPT}-2 (seq. length 1K), and 2.4\${\textbackslash}times\$ speedup on long-range arena (seq. length 1K-4K). {FlashAttention} and block-sparse {FlashAttention} enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on {GPT}-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4\% accuracy) and Path-256 (seq. length 64K, 63.1\% accuracy).},
+	number = {{arXiv}:2205.14135},
+	publisher = {{arXiv}},
+	author = {Dao, Tri and Fu, Daniel Y. and Ermon, Stefano and Rudra, Atri and Ré, Christopher},
+	urldate = {2023-10-31},
+	date = {2022-06-23},
+	eprinttype = {arxiv},
+	eprint = {2205.14135 [cs]},
+	keywords = {Computer Science - Machine Learning},
+	file = {arXiv.org Snapshot:/Users/vinayswamy/Zotero/storage/KUINSGWD/2205.html:text/html;Full Text PDF:/Users/vinayswamy/Zotero/storage/DRD6UDYH/Dao et al. - 2022 - FlashAttention Fast and Memory-Efficient Exact At.pdf:application/pdf},
+}
+
+@misc{meier_language_2021,
+	title = {Language models enable zero-shot prediction of the effects of mutations on protein function},
+	rights = {© 2021, Posted by Cold Spring Harbor Laboratory. This pre-print is available under a Creative Commons License (Attribution-{NonCommercial}-{NoDerivs} 4.0 International), {CC} {BY}-{NC}-{ND} 4.0, as described at http://creativecommons.org/licenses/by-nc-nd/4.0/},
+	url = {https://www.biorxiv.org/content/10.1101/2021.07.09.450648v2},
+	doi = {10.1101/2021.07.09.450648},
+	abstract = {Modeling the effect of sequence variation on function is a fundamental problem for understanding and designing proteins. Since evolution encodes information about function into patterns in protein sequences, unsupervised models of variant effects can be learned from sequence data. The approach to date has been to fit a model to a family of related sequences. The conventional setting is limited, since a new model must be trained for each prediction task. We show that using only zero-shot inference, without any supervision from experimental data or additional training, protein language models capture the functional effects of sequence variation, performing at state-of-the-art.},
+	publisher = {{bioRxiv}},
+	author = {Meier, Joshua and Rao, Roshan and Verkuil, Robert and Liu, Jason and Sercu, Tom and Rives, Alexander},
+	urldate = {2023-10-31},
+	date = {2021-11-17},
+	langid = {english},
+	note = {Pages: 2021.07.09.450648
+Section: New Results},
+	file = {Full Text PDF:/Users/vinayswamy/Zotero/storage/A69AV9PY/Meier et al. - 2021 - Language models enable zero-shot prediction of the.pdf:application/pdf},
+}
+
+@misc{hwang_genomic_2023,
+	title = {Genomic language model predicts protein co-regulation and function},
+	rights = {© 2023, Posted by Cold Spring Harbor Laboratory. The copyright holder for this pre-print is the author. All rights reserved. The material may not be redistributed, re-used or adapted without the author's permission.},
+	url = {https://www.biorxiv.org/content/10.1101/2023.04.07.536042v3},
+	doi = {10.1101/2023.04.07.536042},
+	abstract = {Deciphering the relationship between a gene and its genomic context is fundamental to understanding and engineering biological systems. Machine learning has shown promise in learning latent relationships underlying the sequence-structure-function paradigm from massive protein sequence datasets. However, to date, limited attempts have been made in extending this continuum to include higher order genomic context information. Evolutionary processes dictate the specificity of genomic contexts in which a gene is found across phylogenetic distances, and these emergent genomic patterns can be leveraged to uncover functional relationships between gene products. Here, we trained a genomic language model ({gLM}) on millions of metagenomic scaffolds to learn the latent functional and regulatory relationships between genes. {gLM} learns contextualized protein embeddings that capture the genomic context as well as the protein sequence itself, and encode biologically meaningful and functionally relevant information (e.g. enzymatic function, taxonomy). Our analysis of the attention patterns demonstrates that {gLM} is learning co-regulated functional modules (i.e. operons). Our findings illustrate that {gLM}’s unsupervised deep learning of the metagenomic corpus is an effective and promising approach to encode functional semantics and regulatory syntax of genes in their genomic contexts and uncover complex relationships between genes in a genomic region.},
+	publisher = {{bioRxiv}},
+	author = {Hwang, Yunha and Cornman, Andre L. and Kellogg, Elizabeth H. and Ovchinnikov, Sergey and Girguis, Peter R.},
+	urldate = {2023-10-31},
+	date = {2023-10-15},
+	langid = {english},
+	note = {Pages: 2023.04.07.536042
+Section: New Results},
+	file = {Full Text PDF:/Users/vinayswamy/Zotero/storage/6DV8FZ7P/Hwang et al. - 2023 - Genomic language model predicts protein co-regulat.pdf:application/pdf},
+}
+
+@misc{hu_lora_2021,
+	title = {{LoRA}: Low-Rank Adaptation of Large Language Models},
+	url = {http://arxiv.org/abs/2106.09685},
+	shorttitle = {{LoRA}},
+	abstract = {An important paradigm of natural language processing consists of large-scale pre-training on general domain data and adaptation to particular tasks or domains. As we pre-train larger models, full fine-tuning, which retrains all model parameters, becomes less feasible. Using {GPT}-3 175B as an example -- deploying independent instances of fine-tuned models, each with 175B parameters, is prohibitively expensive. We propose Low-Rank Adaptation, or {LoRA}, which freezes the pre-trained model weights and injects trainable rank decomposition matrices into each layer of the Transformer architecture, greatly reducing the number of trainable parameters for downstream tasks. Compared to {GPT}-3 175B fine-tuned with Adam, {LoRA} can reduce the number of trainable parameters by 10,000 times and the {GPU} memory requirement by 3 times. {LoRA} performs on-par or better than fine-tuning in model quality on {RoBERTa}, {DeBERTa}, {GPT}-2, and {GPT}-3, despite having fewer trainable parameters, a higher training throughput, and, unlike adapters, no additional inference latency. We also provide an empirical investigation into rank-deficiency in language model adaptation, which sheds light on the efficacy of {LoRA}. We release a package that facilitates the integration of {LoRA} with {PyTorch} models and provide our implementations and model checkpoints for {RoBERTa}, {DeBERTa}, and {GPT}-2 at https://github.com/microsoft/{LoRA}.},
+	number = {{arXiv}:2106.09685},
+	publisher = {{arXiv}},
+	author = {Hu, Edward J. and Shen, Yelong and Wallis, Phillip and Allen-Zhu, Zeyuan and Li, Yuanzhi and Wang, Shean and Wang, Lu and Chen, Weizhu},
+	urldate = {2023-10-31},
+	date = {2021-10-16},
+	eprinttype = {arxiv},
+	eprint = {2106.09685 [cs]},
+	keywords = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language, Computer Science - Machine Learning},
+	file = {arXiv.org Snapshot:/Users/vinayswamy/Zotero/storage/FJGMEJU5/2106.html:text/html;Full Text PDF:/Users/vinayswamy/Zotero/storage/VUMT9K42/Hu et al. - 2021 - LoRA Low-Rank Adaptation of Large Language Models.pdf:application/pdf},
+}
+
+@article{lin_evolutionary-scale_2023,
+	title = {Evolutionary-scale prediction of atomic-level protein structure with a language model},
+	volume = {379},
+	url = {https://www.science.org/doi/10.1126/science.ade2574},
+	doi = {10.1126/science.ade2574},
+	abstract = {Recent advances in machine learning have leveraged evolutionary information in multiple sequence alignments to predict protein structure. We demonstrate direct inference of full atomic-level protein structure from primary sequence using a large language model. As language models of protein sequences are scaled up to 15 billion parameters, an atomic-resolution picture of protein structure emerges in the learned representations. This results in an order-of-magnitude acceleration of high-resolution structure prediction, which enables large-scale structural characterization of metagenomic proteins. We apply this capability to construct the {ESM} Metagenomic Atlas by predicting structures for {\textgreater}617 million metagenomic protein sequences, including {\textgreater}225 million that are predicted with high confidence, which gives a view into the vast breadth and diversity of natural proteins.},
+	pages = {1123--1130},
+	number = {6637},
+	journaltitle = {Science},
+	author = {Lin, Zeming and Akin, Halil and Rao, Roshan and Hie, Brian and Zhu, Zhongkai and Lu, Wenting and Smetanin, Nikita and Verkuil, Robert and Kabeli, Ori and Shmueli, Yaniv and dos Santos Costa, Allan and Fazel-Zarandi, Maryam and Sercu, Tom and Candido, Salvatore and Rives, Alexander},
+	urldate = {2023-10-31},
+	date = {2023-03-17},
+	note = {Publisher: American Association for the Advancement of Science},
+	file = {Full Text PDF:/Users/vinayswamy/Zotero/storage/BM4YEC9Z/Lin et al. - 2023 - Evolutionary-scale prediction of atomic-level prot.pdf:application/pdf},
+}
+
+@article{lin_deephomo20_2023,
+	title = {{DeepHomo}2.0: improved protein-protein contact prediction of homodimers by transformer-enhanced deep learning},
+	volume = {24},
+	issn = {1477-4054},
+	doi = {10.1093/bib/bbac499},
+	shorttitle = {{DeepHomo}2.0},
+	abstract = {Protein-protein interactions play an important role in many biological processes. However, although structure prediction for monomer proteins has achieved great progress with the advent of advanced deep learning algorithms like {AlphaFold}, the structure prediction for protein-protein complexes remains an open question. Taking advantage of the Transformer model of {ESM}-{MSA}, we have developed a deep learning-based model, named {DeepHomo}2.0, to predict protein-protein interactions of homodimeric complexes by leveraging the direct-coupling analysis ({DCA}) and Transformer features of sequences and the structure features of monomers. {DeepHomo}2.0 was extensively evaluated on diverse test sets and compared with eight state-of-the-art methods including protein language model-based, {DCA}-based and machine learning-based methods. It was shown that {DeepHomo}2.0 achieved a high precision of {\textgreater}70\% with experimental monomer structures and {\textgreater}60\% with predicted monomer structures for the top 10 predicted contacts on the test sets and outperformed the other eight methods. Moreover, even the version without using structure information, named {DeepHomoSeq}, still achieved a good precision of {\textgreater}55\% for the top 10 predicted contacts. Integrating the predicted contacts into protein docking significantly improved the structure prediction of realistic Critical Assessment of Protein Structure Prediction homodimeric complexes. {DeepHomo}2.0 and {DeepHomoSeq} are available at http://huanglab.phys.hust.edu.cn/{DeepHomo}2/.},
+	pages = {bbac499},
+	number = {1},
+	journaltitle = {Briefings in Bioinformatics},
+	shortjournal = {Brief Bioinform},
+	author = {Lin, Peicong and Yan, Yumeng and Huang, Sheng-You},
+	date = {2023-01-19},
+	pmid = {36440949},
+	keywords = {Algorithms, Computational Biology, deep learning, Deep Learning, homo-oligomers, Machine Learning, protein–protein interaction, Proteins, residue–residue contact prediction, transformer features},
+}
+
+@article{corsello_discovering_2020,
+	title = {Discovering the anti-cancer potential of non-oncology drugs by systematic viability profiling},
+	volume = {1},
+	issn = {2662-1347},
+	url = {https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7328899/},
+	doi = {10.1038/s43018-019-0018-6},
+	abstract = {Anti-cancer uses of non-oncology drugs have occasionally been found, but
+such discoveries have been serendipitous. We sought to create a public resource
+containing the growth inhibitory activity of 4,518 drugs tested across 578 human
+cancer cell lines. We used {PRISM}, a molecular barcoding method, to screen drugs
+against cell lines in pools. An unexpectedly large number of non-oncology drugs
+selectively inhibited subsets of cancer cell lines in a manner predictable from
+the cell lines’ molecular features. Our findings include compounds that
+killed by inducing {PDE}3A-{SLFN}12 complex formation; vanadium-containing compounds
+whose killing depended on the sulfate transporter {SLC}26A2; the alcohol
+dependence drug disulfiram, which killed cells with low expression of
+metallothioneins; and the anti-inflammatory drug tepoxalin, which killed via the
+multi-drug resistance protein {ABCB}1. The {PRISM} drug repurposing resource
+(https://depmap.org/repurposing) is a starting
+point to develop new oncology therapeutics, and more rarely, for potential
+direct clinical translation.},
+	pages = {235--248},
+	number = {2},
+	journaltitle = {Nature cancer},
+	shortjournal = {Nat Cancer},
+	author = {Corsello, Steven M. and Nagari, Rohith T. and Spangler, Ryan D. and Rossen, Jordan and Kocak, Mustafa and Bryan, Jordan G. and Humeidi, Ranad and Peck, David and Wu, Xiaoyun and Tang, Andrew A. and Wang, Vickie M. and Bender, Samantha A. and Lemire, Evan and Narayan, Rajiv and Montgomery, Philip and Ben-David, Uri and Garvie, Colin W. and Chen, Yejia and Rees, Matthew G. and Lyons, Nicholas J. and {McFarland}, James M. and Wong, Bang T. and Wang, Li and Dumont, Nancy and O’Hearn, Patrick J. and Stefan, Eric and Doench, John G. and Harrington, Caitlin N. and Greulich, Heidi and Meyerson, Matthew and Vazquez, Francisca and Subramanian, Aravind and Roth, Jennifer A. and Bittker, Joshua A. and Boehm, Jesse S. and Mader, Christopher C. and Tsherniak, Aviad and Golub, Todd R.},
+	urldate = {2023-10-31},
+	date = {2020-02},
+	pmid = {32613204},
+	pmcid = {PMC7328899},
+	file = {PubMed Central Full Text PDF:/Users/vinayswamy/Zotero/storage/BZ4J9WUD/Corsello et al. - 2020 - Discovering the anti-cancer potential of non-oncol.pdf:application/pdf},
+}
+
+@misc{rao_evaluating_2019,
+	title = {Evaluating Protein Transfer Learning with {TAPE}},
+	url = {http://arxiv.org/abs/1906.08230},
+	abstract = {Protein modeling is an increasingly popular area of machine learning research. Semi-supervised learning has emerged as an important paradigm in protein modeling due to the high cost of acquiring supervised protein labels, but the current literature is fragmented when it comes to datasets and standardized evaluation techniques. To facilitate progress in this field, we introduce the Tasks Assessing Protein Embeddings ({TAPE}), a set of five biologically relevant semi-supervised learning tasks spread across different domains of protein biology. We curate tasks into specific training, validation, and test splits to ensure that each task tests biologically relevant generalization that transfers to real-life scenarios. We benchmark a range of approaches to semi-supervised protein representation learning, which span recent work as well as canonical sequence learning techniques. We find that self-supervised pretraining is helpful for almost all models on all tasks, more than doubling performance in some cases. Despite this increase, in several cases features learned by self-supervised pretraining still lag behind features extracted by state-of-the-art non-neural techniques. This gap in performance suggests a huge opportunity for innovative architecture design and improved modeling paradigms that better capture the signal in biological sequences. {TAPE} will help the machine learning community focus effort on scientifically relevant problems. Toward this end, all data and code used to run these experiments are available at https://github.com/songlab-cal/tape.},
+	number = {{arXiv}:1906.08230},
+	publisher = {{arXiv}},
+	author = {Rao, Roshan and Bhattacharya, Nicholas and Thomas, Neil and Duan, Yan and Chen, Xi and Canny, John and Abbeel, Pieter and Song, Yun S.},
+	urldate = {2023-10-31},
+	date = {2019-06-19},
+	eprinttype = {arxiv},
+	eprint = {1906.08230 [cs, q-bio, stat]},
+	keywords = {Computer Science - Machine Learning, Quantitative Biology - Biomolecules, Statistics - Machine Learning},
+	file = {arXiv.org Snapshot:/Users/vinayswamy/Zotero/storage/92P5QYD8/1906.html:text/html;Full Text PDF:/Users/vinayswamy/Zotero/storage/CMJFZW7C/Rao et al. - 2019 - Evaluating Protein Transfer Learning with TAPE.pdf:application/pdf},
+}
