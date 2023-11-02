@@ -1,0 +1,48 @@
+---
+title: "Homework 3"
+author: "Vinay Swamy"
+format: pdf
+---
+
+## Problem 1 
+
+WandB workspace: https://wandb.ai/vinay-swamy/HPML_hw3
+
+### Profiler Overview
+
+![](imgs/overview.png)
+
+### Profiler GPU operations
+
+![](imgs/GPU_ops.png)
+
+### Profiler function trace
+
+![](imgs/trace.png)
+
+### WandB sweep Figures 
+
+![](imgs/wandb_sweeep_graph.png)
+
+
+## Q1
+
+Tracing uses an example input tensor(s) to explicitly trace the computation graph. The downside of this approach is that it locks in the graph to the structure of the specific inputs, as well as following a single path through various control flow mechanisms. Scripting analyses the code itself and uses JIT compilation to compile the code into a computation graph. This allows for more flexibility in the inputs, as well as allowing for multiple paths through control flow mechanisms.
+
+## Q2
+
+The main changes required are the following:
+
+- The inclusion of type annotations for the `.forward()` arguments(and more generally for any function that gets scripted). By default, torchscript assumes that all inputs to a scripted function are `torch.Tensor`, and so to use other types, such as `int` or `str`, we need to explicitly annotate the types of the arguments.
+- Tensors cannot be conditionally instantiated. Instead, tensors must be instantiated before the conditional, and then the conditional can be used to assign values to the tensor.
+
+## Q3
+
+Overall, the performance of the model improves when using the JIT compiler, but only on the GPU. For the CPU, the JIT compiler is about the same. On the GPU, we get an average runtime increase of about 10 seconds. More gains would likely be seen for decoding longer sequences, as compilation of loops is likely a major source of performance gains.
+
+|    |   avg runtime | device   | scripted   |
+|---:|--------------:|:---------|:-----------|
+|  0 |     149.057   | cpu      | no         |
+|  1 |     150.742   | cpu      | yes        |
+|  2 |      16.0542  | gpu      | no         |
+|  3 |       06.0586 | gpu      | yes        |
