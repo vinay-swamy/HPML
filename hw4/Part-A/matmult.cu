@@ -47,6 +47,7 @@ void MatMul(const Matrix A, const Matrix B, Matrix C, int dimension){
 
   // Define grid topology
   dim3 dimBlock(BLOCK_SIZE,BLOCK_SIZE);
+  //dim3 dimGrid(2,2);
   dim3 dimGrid(B.width/dimension, A.height/dimension);
 
   // Invoke kernel for warm up
@@ -196,6 +197,7 @@ int main(int argc, char** argv) {
   initMatrix(host_B,true);
  
   // debugging
+  //printMatrix(host_A, "host_A");
   if(verbose){
     printMatrix(host_A, "host_A");
     printMatrix(host_B, "host_B");
@@ -206,7 +208,10 @@ int main(int argc, char** argv) {
   // the device kernel MatMulKernel and
   // times its performance.
   MatMul(host_A,host_B,host_C,FOOTPRINT_SIZE);
-
+  // for(int i=0; i<1024; i++){
+  //   int tmp = host_C.elements[i];
+  //   printf("%d,%d\n",i, tmp );
+  // }
   // Verify that the result is correct.
   checkResult(host_C);
   
