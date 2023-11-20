@@ -77,20 +77,14 @@ int main(int argc, char** argv)
 
     // Allocate input vectors h_A and h_B in host memory
     h_A = (float*)malloc(size);
-    if (h_A == 0) Cleanup(false);
     h_B = (float*)malloc(size);
-    if (h_B == 0) Cleanup(false);
     h_C = (float*)malloc(size);
-    if (h_C == 0) Cleanup(false);
 
     // Allocate vectors in device memory.
     cudaError_t error;
-    error = cudaMalloc((void**)&d_A, size);
-    if (error != cudaSuccess) Cleanup(false);
-    error = cudaMalloc((void**)&d_B, size);
-    if (error != cudaSuccess) Cleanup(false);
-    error = cudaMalloc((void**)&d_C, size);
-    if (error != cudaSuccess) Cleanup(false);
+    cudaMalloc((void**)&d_A, size);
+    cudaMalloc((void**)&d_B, size);
+    cudaMalloc((void**)&d_C, size);
 
     // Initialize host vectors h_A and h_B
     int i;
@@ -100,15 +94,13 @@ int main(int argc, char** argv)
     }
 
     // Copy host vectors h_A and h_B to device vectores d_A and d_B
-    error = cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
-    if (error != cudaSuccess) Cleanup(false);
-    error = cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
-    if (error != cudaSuccess) Cleanup(false);
+    cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
+    
 
     // Warm up
     AddVectors<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, ValuesPerThread);
-    error = cudaGetLastError();
-    if (error != cudaSuccess) Cleanup(false);
+
     cudaDeviceSynchronize();
 
     // Initialize timer  
@@ -117,8 +109,7 @@ int main(int argc, char** argv)
 
     // Invoke kernel
     AddVectors<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, ValuesPerThread);
-    error = cudaGetLastError();
-    if (error != cudaSuccess) Cleanup(false);
+
     cudaDeviceSynchronize();
 
     // Compute elapsed time 
@@ -140,8 +131,8 @@ int main(int argc, char** argv)
     //          time, nGFlopsPerSec, nGBytesPerSec);
      
     // Copy result from device memory to host memory
-    error = cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
-    if (error != cudaSuccess) Cleanup(false);
+    cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
+    
 
     // Verify & report result
     for (i = 0; i < N; ++i) {
@@ -149,7 +140,7 @@ int main(int argc, char** argv)
         if (fabs(val - N) > 1e-5)
             break;
     }
-    //printf("Test %s \n", (i == N) ? "PASSED" : "FAILED");
+    printf("", (i == N) ? "" : "FAILED");
     printf("%lf", time);
     // Clean up and exit.
     Cleanup(true);

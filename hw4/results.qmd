@@ -1,0 +1,64 @@
+---
+title: "Homework 4 "
+author: "Vinay Swamy"
+format: pdf
+---
+
+
+# Part A
+
+## Question 1   
+
+### 500
+
+
+### 1000
+
+
+### 2000
+
+## Question 2
+
+### 500
+
+### 1000
+
+### 2000
+
+## Question 3
+
+It was easier to just run the timings for each questions as one script.
+
+```{python}
+import pandas as pd 
+timings = pd.read_csv("Part-B/time_results.txt", names = ["question", "K", "gridSize_kernelSize", "time"]).assign(
+    gridSize_kernelSize = lambda x: x.gridSize_kernelSize.fillna("CPU")
+)
+
+timings
+```
+
+```{python}
+timings_pp = timings.assign(K = lambda x: x['K']*1e6)
+timings_q12 = timings_pp.query("question == 'Q1'").assign(question = "Q2")
+timings_q3 = timings_pp.query("question == 'Q1'").assign(question = "Q3")
+
+timings_pp = pd.concat([timings_pp.query("question != 'Q1'"), timings_q12, timings_q3])
+```
+
+```{python}
+import plotnine as pn 
+
+(
+    pn.ggplot(timings_pp,
+    pn.aes(x = "K", y = "time", color = "gridSize_kernelSize")) + 
+    pn.geom_point() +
+    pn.geom_line() +
+    pn.labs(x = "Vector Size", y = "Time (s)", color = "Grid Size, Kernel Size") +
+    pn.ggtitle("Vector Addition Timings") +
+    pn.scale_x_log10() +
+    pn.scale_y_log10() +
+    pn.facet_wrap("~question") +
+    pn.theme_bw()
+)
+```

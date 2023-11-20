@@ -21,13 +21,11 @@
 #include "vecaddKernel.h"
 
 // Defines
-#define GridWidth 60
-#define BlockWidth 128
+// #define GridWidth 60
+// #define BlockWidth 128
 
 // Variables for host and device vectors.
-float* h_A; 
-float* h_B; 
-float* h_C; 
+
 float* d_A; 
 float* d_B; 
 float* d_C; 
@@ -39,25 +37,35 @@ void checkCUDAError(const char *msg);
 // Host code performs setup and calls the kernel.
 int main(int argc, char** argv)
 {
-    int ValuesPerThread; // number of values per thread
+    int K; // number of values per thread
+    int GridWidth; //Grid size
+    int BlockWidth; //Block size
     int N; //Vector size
+    int ValuesPerThread; //Number of values added by each thread
 
 	// Parse arguments.
-    if(argc != 2){
-     printf("Usage: %s ValuesPerThread\n", argv[0]);
+    if(argc != 4){
+     printf("Usage: GridWidth, BlockWidth, K ", argv[0]);
      printf("ValuesPerThread is the number of values added by each thread.\n");
      printf("Total vector size is 128 * 60 * this value.\n");
-     exit(0);
+     return 0;
     } else {
-      sscanf(argv[1], "%d", &ValuesPerThread);
+      sscanf(argv[3], "%d", &K);
+      sscanf(argv[1], "%d", &GridWidth);
+      sscanf(argv[2], "%d", &BlockWidth);
+
     }      
 
     // Determine the number of threads .
     // N is the total number of values to be in a vector
-    N = ValuesPerThread * GridWidth * BlockWidth;
-    printf("Total vector size: %d\n", N); 
+    
     // size_t is the total number of bytes for a vector.
-    size_t size = N * sizeof(float);
+    int n_elem = K * 1000000;
+    //printf("Total vector size: %d\n", n_elem); 
+    int size = n_elem * sizeof(int);
+    int total_threads = GridWidth * BlockWidth;
+    ValuesPerThread = n_elem / total_threads;
+    N = ValuesPerThread * GridWidth * BlockWidth;
 
     // Tell CUDA how big to make the grid and thread blocks.
     // Since this is a vector addition problem,
@@ -65,40 +73,27 @@ int main(int argc, char** argv)
     dim3 dimGrid(GridWidth);                    
     dim3 dimBlock(BlockWidth);                 
 
-    // Allocate input vectors h_A and h_B in host memory
-    h_A = (float*)malloc(size);
-    if (h_A == 0) Cleanup(false);
-    h_B = (float*)malloc(size);
-    if (h_B == 0) Cleanup(false);
-    h_C = (float*)malloc(size);
-    if (h_C == 0) Cleanup(false);
-
     // Allocate vectors in device memory.
     cudaError_t error;
-    error = cudaMalloc((void**)&d_A, size);
-    if (error != cudaSuccess) Cleanup(false);
-    error = cudaMalloc((void**)&d_B, size);
-    if (error != cudaSuccess) Cleanup(false);
-    error = cudaMalloc((void**)&d_C, size);
-    if (error != cudaSuccess) Cleanup(false);
+    float* d_A;
+    float* d_B;
+    float* d_C;
+
+    cudaMallocManaged(&d_A, size);
+    cudaMallocManaged(&d_B, size);
+    cudaMallocManaged(&d_C, size);
 
     // Initialize host vectors h_A and h_B
     int i;
     for(i=0; i<N; ++i){
-     h_A[i] = (float)i;
-     h_B[i] = (float)(N-i);   
+     d_A[i] = (float)i;
+     d_B[i] = (float)(N-i);   
     }
-
-    // Copy host vectors h_A and h_B to device vectores d_A and d_B
-    error = cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
-    if (error != cudaSuccess) Cleanup(false);
-    error = cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
-    if (error != cudaSuccess) Cleanup(false);
+    
 
     // Warm up
     AddVectors<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, ValuesPerThread);
-    error = cudaGetLastError();
-    if (error != cudaSuccess) Cleanup(false);
+
     cudaDeviceSynchronize();
 
     // Initialize timer  
@@ -107,8 +102,7 @@ int main(int argc, char** argv)
 
     // Invoke kernel
     AddVectors<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, ValuesPerThread);
-    error = cudaGetLastError();
-    if (error != cudaSuccess) Cleanup(false);
+
     cudaDeviceSynchronize();
 
     // Compute elapsed time 
@@ -126,21 +120,20 @@ int main(int argc, char** argv)
     double nGBytesPerSec = nBytesPerSec*1e-9;
 
 	// Report timing data.
-    printf( "Time: %lf (sec), GFlopsS: %lf, GBytesS: %lf\n", 
-             time, nGFlopsPerSec, nGBytesPerSec);
+    // printf( "Time: %lf (sec), GFlopsS: %lf, GBytesS: %lf\n", 
+    //          time, nGFlopsPerSec, nGBytesPerSec);
      
     // Copy result from device memory to host memory
-    error = cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
-    if (error != cudaSuccess) Cleanup(false);
+    
 
     // Verify & report result
     for (i = 0; i < N; ++i) {
-        float val = h_C[i];
+        float val = d_C[i];
         if (fabs(val - N) > 1e-5)
             break;
     }
-    printf("Test %s \n", (i == N) ? "PASSED" : "FAILED");
-
+    printf("", (i == N) ? "" : "FAILED");
+    printf("%lf", time);
     // Clean up and exit.
     Cleanup(true);
 }
@@ -156,13 +149,7 @@ void Cleanup(bool noError) {  // simplified version from CUDA SDK
     if (d_C)
         cudaFree(d_C);
 
-    // Free host memory
-    if (h_A)
-        free(h_A);
-    if (h_B)
-        free(h_B);
-    if (h_C)
-        free(h_C);
+
         
     error = cudaDeviceReset();
     

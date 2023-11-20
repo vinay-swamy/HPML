@@ -40,7 +40,8 @@ int main(int argc, char* argv[]) {
 
     // Calculate and print the time taken to add the arrays
     auto rt = duration_cast<microseconds>(end - start);
-    cout << " Run Time(microseconds): " << rt.count() << endl;
+    float runtime = (float)rt.count()/1000000;
+    printf("%f", runtime);
 
     // Free the allocated memory
     free(inp1);

@@ -123,6 +123,23 @@ Filter MakeHostFilter(int c_in, int k_out, int fw, int fh){
     return newHostFilter;
 }
 
+__global__ void convKernel(Matrix in_mat, Filter F, Matrix out_mat){
+    int c = blockIdx.x;
+    int w = blockIdx.y * blockDim.x + threadIdx.x;
+    int h = blockIdx.z * blockDim.y + threadIdx.y;
+    int grid_size = in_mat.width * in_mat.height;
+    int filter_size = F.fw * F.fh;
+    int out_grid_size = out_mat.width * out_mat.height;
+    double sum = 0;
+    for(int i=0; i < F.fw; i++){
+        for(int j=0; j < F.fh; j++){
+            for(int k=0; k < F.c; k++){
+                sum += in_mat.elements[k * grid_size + (w+i) * in_mat.width + (h+j)] * F.weights[c * F.c * filter_size + k * filter_size + i * F.fw + j];
+            }
+        }
+    }
+    out_mat.elements[c * out_grid_size + w * out_mat.width + h] = sum;
+}
 
 int main(){
     Matrix mat = MakeHostMatrix(3, 1024, 1024);
