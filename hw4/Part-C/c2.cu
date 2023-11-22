@@ -157,52 +157,53 @@ void PrintFilter(Filter F, int k ){
     }
 }
 
-__global__ void NaiveConvKernel(Matrix M, Filter F, Matrix O){
+__global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
     /*
-    keep it simple: each thread is responsible for one element in the output, 
-    so we use a single 1024 x 1 thread block, and then a 64 x 1024 grid of blocks.
-    
+    More complicated version. 
+    Read in a 34x34 sized tile; This writes to a 32x32 output space
+    when advancing the tile, will need to read in 2 extra rows and columns
+    we still would only advance by 32 for each blocks, so a layout of 
+    32x32 thread blocks, then a 32x32x64 grid  *should* work 
+
+    can we store all filters in mem?
+    3*3*3*64 *8= 13824 = 14kb
+    34*34*3*8 = 27864 = 28kb
+    I think the shared mem size for ampere GPUs is 164 kb, so this should be fine
+    Like before, each thread performs a single convulution
     */
 
-    int matrix_width = M.width;
-    int matrix_height = M.height;
-    int row_idx = blockIdx.y; 
-    int col_idx = threadIdx.x;
-    int c_out_idx = blockIdx.x;
-    int elem_per_filter = F.fw * F.fh * F.c;
+    int thread_row = threadIdx.y;
+    int thread_col = threadIdx.x;
+    int block_row = blockIdx.y;
+    int block_col = blockIdx.x;
+    int block_channel = blockIdx.z;
 
-    //if(c_out_idx == 0 && row_idx == 0 && col_idx == 0) PrintFilter(F, 0)
-    
-    double* Msub;
-    double* Fsub;
-    Msub = &M.elements[row_idx * M.width + col_idx];// only need to worry about getting into the first channel 
-    Fsub = &F.weights[c_out_idx * elem_per_filter ]; //only need to get to start of right out channel
-    // if(c_out_idx == 0 && row_idx == 0 && col_idx == 0){
-    //      for (int c = 0; c < 3; c++){
-    //         printf("MChannel: %d\n", c);
-    //         for (int i = 0; i < 3; i++){
-    //             for (int j = 0; j < 3; j++){
-    //             printf("%.0f,", Msub[c * (1026*1026) + i * 1026 + j]);
-    //             }
-    //             printf("\n");
-    //         }
-    //      }
-    // };
+    double* Msub; 
+    // like before, because we always are starting at the first channel of the image
+    Msub = &M.elements[block_row * M.width + block_col];
 
-    
-    double sum = 0;
-    for (int c = 0; c < 3 ; c++){
-        for (int x = 0; x < 3; x++){
-            for (int y = 0; y < 3; y++){
-                sum += Msub[c * (1026*1026) + x * 1026 + y] * Fsub[c * (3*3) + x * 3 + y];
-            }
+    // next read the filters into shared memory:
+    // lets try not using the ndim array, and jsut a flat array to make things easier 
+    __shared__ double Fsub[64*3*3*3];
+    // there's 1728 elem in the filter, and 1024 threads so we need to divy this up nicely 
+    // 64*9 is 576, we can have 576 threads read in 3 elements each, and then have the remaining threads wait?
+    // need to keep this coalesced 
+    if(thread_row * thread_col < 576){
+        for(int i=0; i < 3; i++){
+            // i*576  = feed conescutive threads consecutive elements
+            //thread_row * thread_col get to the right element within the loop iteration
+            Fsub[i*576 + thread_row * thread_col] = F.weights[i*576 + thread_row * thread_col];
         }
+    }else if (thread_row * thread_col >= 576 && thread_row * thread_col < 576 +289){
+        // this is the remaining threads, we can have them chill 
     }
-    // if (c_out_idx == 0 && row_idx == 0 && col_idx == 0){
-    //     printf("sum: %f\n", sum);
-    // };
 
-    O.elements[c_out_idx * (1024*1024) + row_idx * 1024 + col_idx] = sum;
+    // actually, while this runs we can have the remaining threads read in the submatrix
+    // we need to read in 34x34, or 1156 elems. The nice way to divy it up, is to have 289 threads
+    // read in 4 elements each, and have that remaider chill 
+
+
+
 }
 
 
@@ -222,7 +223,7 @@ int main(){
     // 
     dim3 dimBlock(1024);
     dim3 dimGrid(64,1024);
-    NaiveConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
+    TiledConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
     cudaDeviceSynchronize();
     cudaMemcpy(h_out_mat.elements, d_out_mat.elements, 64 * 1024 * 1024 * sizeof(double), cudaMemcpyDeviceToHost);
     double checksum = 0;
