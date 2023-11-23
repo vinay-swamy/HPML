@@ -134,7 +134,7 @@ Filter MakeHostFilter(int c_in, int k_out, int fw, int fh){
     return newHostFilter;
 }
 
-__device__ void PrintChannel(Matrix M, int channel ){
+void PrintChannel(Matrix M, int channel ){
     int grid_size = M.width * M.height;
     for(int x= 0; x < M.height; x++){
         for(int y=0; y < M.width; y++){
@@ -158,19 +158,7 @@ void PrintFilter(Filter F, int k ){
 }
 
 __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
-    /*
-    More complicated version. 
-    Read in a 32x32 sized tile; This writes to a 30x30 output space
-    when advancing the tile, so will need to account for this 
-    1024/30 =~ 35, so we'll have a 35 x 35 grid of blocks 
-    we'll need to have some checks in place to make sure we don't read out of bounds
-
-    can we store all filters in mem?
-    3*3*3*64 *8= 13824 = 14kb
-    32*32*3*8 = 27864 = 28kb
-    I think the shared mem size for ampere GPUs is 164 kb, so this should be fine
-    Like before, each thread performs a single convulution
-    */
+    
     int thread_row = threadIdx.y;
     int thread_col = threadIdx.x;
     int block_row = blockIdx.y;
@@ -180,61 +168,56 @@ __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
     int block_height = 30;
     int global_row = block_row * block_height+ thread_row;
     int global_col = block_col * block_width + thread_col;
-    //if (thread_row == 0 && thread_col == 0 && block_row ==0 && block_col == 0 && c_out_channel == 0) PrintChannel(M, 1);
+    /*
+    problem: given that the block width is 30, and the thread block length is 32, 
+    we are getting collisions , at least when writing but likelly else
+    // need to do 30 by 30, not 32 by 32 
+    */
    
-
     double* Msub; 
     // like before, because we always are starting at the first channel of the image
-    Msub = &M.elements[block_row * M.width + block_col*block_width];
-    // if (thread_row == 0 && thread_col == 0 && block_row ==0 && block_col == 0 && c_out_channel == 0){
-    //     int t_channel = 1; 
-    //     int grid_size = M.width * M.height;
-    //     printf("Msub: \n");
-    //     for (int x = 0; x<32; x++){
-    //         for(int y = 0; y < 32; y++){
-    //             printf("%.0f,", Msub[t_channel * grid_size + x*M.width + y]);
-    //         }
-    //         printf("\n");
-    //     }
-    // }
-    // next read the filters into shared memory:
-    // lets try not using the ndim array, and jsut a flat array to make things easier 
-    //__shared__ double shared_Fsub[64*3*3*3];
-    // this is probably not the best way to do this, bu
+    Msub = &M.elements[block_row * (block_width * M.width) + block_col*block_width];
+    
     __shared__ double shared_Msub[3*32*32];
     // each thread reads in at a single position, but 3 times along the channel dimension
-    for(int c = 0; c < 3 ; c++){
-        if (global_row < 1024 && global_col < 1024){ //  only update if in bounds
-            shared_Msub[c*(32*32) + thread_row * 32 + thread_col] = Msub[c*(M.width*M.height) + thread_row * M.width + thread_col];
+    
+    for (int c = 0; c < 3; c++){
+        for( int os =0; os < 2; os++){
+            int total_thread_idx = thread_row *30 + thread_col + os * (30*30);
+            int row_in_Msub = total_thread_idx / 32;
+            int col_in_Msub = total_thread_idx % 32;
+            if (total_thread_idx < 32*32){
+                shared_Msub[c*(32*32) + total_thread_idx] = Msub[c*(M.width*M.height) + row_in_Msub * M.width + col_in_Msub];
+            }
+        }
+    }
+    __syncthreads();
+    __shared__ double shared_Fsub[64*3*3*3];
+    
+    for( int i =0; i<2; i++){
+        int flat_thread_index = thread_row * 30 + thread_col  + i*(30*30);
+        if (flat_thread_index < 64*3*3*3){
+            
+            shared_Fsub[flat_thread_index] = F.weights[flat_thread_index];
         }
     }
     __syncthreads();
 
     // if (thread_row == 0 && thread_col == 0 && block_row ==0 && block_col == 0 && c_out_channel == 0){
-    //     int t_channel = 1; 
-    //     printf("shared_Msub: \n");
-    //     for (int x = 0; x<32; x++){
-    //         for(int y = 0; y < 32; y++){
-    //             printf("%.0f,", shared_Msub[(32*32) + x*32 + y]);
+    //     //PrintChannel(M,1);
+    //     for (int c = 0; c < 3; c++){
+    //         printf("channel: %d\n", c);
+    //         for (int x = 0; x < 32; x++){
+    //             for (int y = 0; y < 32 ; y++){
+    //                 printf("%.0f,", shared_Msub[c*(32*32) + x * 32 + y]);
+    //             }
+    //             printf("\n");
     //         }
-    //         printf("\n");
     //     }
     // }
 
-    // now read in the filters. b/c we are loading in all filters, we don't need to worry about a seond sub, or jumping rows
-    // paralellize reads over the c_out, c_in, and fw dimensions 
-    __shared__ double shared_Fsub[64*3*3*3];
-    int flat_thread_index = thread_row * 32 + thread_col;
-    for( int i =0; i<2; i++){
-        if (i * flat_thread_index < 64*3*3*3){
-            shared_Fsub[i*flat_thread_index] = F.weights[i*flat_thread_index];
-        }
-    }
-    __syncthreads();
+    
 
-    // now do the actual convolution part
-    // each thread will perform a single convolution
-    // we'll need to loop over the channel dimension
     double sum = 0;
     for( int c = 0; c < 3 ;c++){
         for (int x = 0; x < 3; x++){
@@ -256,9 +239,16 @@ __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
     
     //write to the output
     if (global_row < 1024 && global_col < 1024){
+        int idx = c_out_channel * (O.width * O.height) + global_row * 1024 + global_col;
+        if (idx==30){
+            //printf("writing to 30 : %f\n", sum);
+            //printf("thread_row: %d, thread_col: %d, block_row: %d, block_col: %d, c_out_channel: %d\n", thread_row, thread_col, block_row, block_col, c_out_channel);
+            //printf("global_col: %d, global_row: %d\n", global_col, global_row);
+        }
         O.elements[c_out_channel * (O.width * O.height) + global_row * 1024 + global_col] = sum;
     }
     
+    //if (thread_row == 0 && thread_col == 0 && block_row ==0 && block_col == 1 && c_out_channel == 0) printf("sum: %f\n", sum);
 
 
     // if (thread_row == 0 && thread_col == 0 && block_row ==0 && block_col == 0 && c_out_channel == 0){
@@ -289,20 +279,21 @@ __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
     
 }
 
-int main(){
+int main(int argc, char *argv[]){
+
     Matrix h_mat = MakeHostMatrix(3, 1024, 1024, false);
     Matrix h_padded_mat = PadMatrix(h_mat, 1);
     Matrix h_out_mat = MakeHostMatrix(64, 1024, 1024, true);
     Filter h_filt = MakeHostFilter(3, 64, 3, 3);
     
-    //PrintChannel(h_padded_mat, 0);
+    //PrintChannel(h_padded_mat, 1);
 
     Matrix d_mat = MakeDeviceMatrix(h_padded_mat, true);
     Filter d_filt = MakeDeviceFilter(h_filt, true);
     Matrix d_out_mat = MakeDeviceMatrix(h_out_mat, false);
     
     // 
-    dim3 dimBlock(32,32);
+    dim3 dimBlock(30,30);
     //1024/30 = 34.13 ~ 35
     dim3 dimGrid(35,35,64);
     TiledConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
@@ -313,6 +304,7 @@ int main(){
         checksum += h_out_mat.elements[i];
     }
     printf("checksum: %f\n", checksum);
-    //PrintChannel(h_out_mat, 0);
+    //int cout_channel = std::atoi(argv[1]);
+    //PrintChannel(h_out_mat, cout_channel );
     return 0 ;
 }
