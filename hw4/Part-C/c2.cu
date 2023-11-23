@@ -169,20 +169,31 @@ __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
     int global_row = block_row * block_height+ thread_row;
     int global_col = block_col * block_width + thread_col;
     /*
-    problem: given that the block width is 30, and the thread block length is 32, 
-    we are getting collisions , at least when writing but likelly else
-    // need to do 30 by 30, not 32 by 32 
+    Final Solution - the main problem is that the the input and output are not the same size, 
+    and we have to overlap the tiles by two to correctly get the output.
+    Read in a 32x32 tile, using a 30x30 thread block. 1024/30 = 34.13 ~ 35, so we can have a 35 x35 grid,
+    and then have 64 blocks in the Z direction, one for each output channel. So each convolutional filter operates
+    on a 3x3x3 subregion of the tile in parallel, across the whole input matrix
     */
    
     double* Msub; 
-    // like before, because we always are starting at the first channel of the image
+    // because each block operates on a 3 x32 x32 tile, we only need to set the pointer 
+    // to a value in the 0th channel; 
     Msub = &M.elements[block_row * (block_width * M.width) + block_col*block_width];
-    
+    // allocate shared as a flat array as well, to simply the indexing math a little bit
     __shared__ double shared_Msub[3*32*32];
-    // each thread reads in at a single position, but 3 times along the channel dimension
+    
     
     for (int c = 0; c < 3; c++){
         for( int os =0; os < 2; os++){
+            // because we have the issue of the input and output not being the same size, we can 
+            // think of this as operations along the flat array, and derive a total thread index, 
+            // where each consecutuve thread reads consecutuve elements in the flat matrix
+            // need to map this total thread index to a row and col in the global matrix 
+            // each thread reads in 1 pixel, but across all channels.
+            // additionally, bc we have 32x32 thread tile, but 30x30 threads, some threads will need
+            // to read in 2 pixels, so we need to account for that as well, and make sure that we don't
+            // read out of bounds
             int total_thread_idx = thread_row *30 + thread_col + os * (30*30);
             int row_in_Msub = total_thread_idx / 32;
             int col_in_Msub = total_thread_idx % 32;
@@ -193,7 +204,7 @@ __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
     }
     __syncthreads();
     __shared__ double shared_Fsub[64*3*3*3];
-    
+    // similar to above, but
     for( int i =0; i<2; i++){
         int flat_thread_index = thread_row * 30 + thread_col  + i*(30*30);
         if (flat_thread_index < 64*3*3*3){
@@ -202,21 +213,6 @@ __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
         }
     }
     __syncthreads();
-
-    // if (thread_row == 0 && thread_col == 0 && block_row ==0 && block_col == 0 && c_out_channel == 0){
-    //     //PrintChannel(M,1);
-    //     for (int c = 0; c < 3; c++){
-    //         printf("channel: %d\n", c);
-    //         for (int x = 0; x < 32; x++){
-    //             for (int y = 0; y < 32 ; y++){
-    //                 printf("%.0f,", shared_Msub[c*(32*32) + x * 32 + y]);
-    //             }
-    //             printf("\n");
-    //         }
-    //     }
-    // }
-
-    
 
     double sum = 0;
     for( int c = 0; c < 3 ;c++){
@@ -239,43 +235,8 @@ __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
     
     //write to the output
     if (global_row < 1024 && global_col < 1024){
-        int idx = c_out_channel * (O.width * O.height) + global_row * 1024 + global_col;
-        if (idx==30){
-            //printf("writing to 30 : %f\n", sum);
-            //printf("thread_row: %d, thread_col: %d, block_row: %d, block_col: %d, c_out_channel: %d\n", thread_row, thread_col, block_row, block_col, c_out_channel);
-            //printf("global_col: %d, global_row: %d\n", global_col, global_row);
-        }
         O.elements[c_out_channel * (O.width * O.height) + global_row * 1024 + global_col] = sum;
     }
-    
-    //if (thread_row == 0 && thread_col == 0 && block_row ==0 && block_col == 1 && c_out_channel == 0) printf("sum: %f\n", sum);
-
-
-    // if (thread_row == 0 && thread_col == 0 && block_row ==0 && block_col == 0 && c_out_channel == 0){
-    // printf("shared_Fsub: \n");
-    // for(int c = 0; c<3; c++){
-    //     printf("channel: %d\n", c);
-    //     for(int x=0; x<3; x++){
-    //         for(int y=0;  y<3; y++){
-    //             //printf("%d,", c*9 + x*3 + y);
-    //             printf("%.0f,", shared_Fsub[c*9 + x*3 + y]);
-    //         }
-    //         printf("\n");
-    //     }
-    // }
-    // printf("F: \n");
-    // for(int c = 0; c<3; c++){
-    //     printf("channel: %d\n", c);
-    //     for(int x=0; x<3; x++){
-    //         for(int y=0;  y<3; y++){
-    //             printf("%.0f,", F.weights[c*9 + x*3 + y]);
-    //         }
-    //         printf("\n");
-    //     }
-    // }
-
-    // }
-    
     
 }
 
