@@ -213,23 +213,23 @@ int main(){
     Matrix h_out_mat = MakeHostMatrix(64, 1024, 1024, true);
     Filter h_filt = MakeHostFilter(3, 64, 3, 3);
     
-    //PrintChannel(h_padded_mat, 0);
+    PrintChannel(h_mat, 2);
 
-    Matrix d_mat = MakeDeviceMatrix(h_padded_mat, true);
-    Filter d_filt = MakeDeviceFilter(h_filt, true);
-    Matrix d_out_mat = MakeDeviceMatrix(h_out_mat, false);
+    // Matrix d_mat = MakeDeviceMatrix(h_padded_mat, true);
+    // Filter d_filt = MakeDeviceFilter(h_filt, true);
+    // Matrix d_out_mat = MakeDeviceMatrix(h_out_mat, false);
     
-    // 
-    dim3 dimBlock(1024);
-    dim3 dimGrid(64,1024);
-    NaiveConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
-    cudaDeviceSynchronize();
-    cudaMemcpy(h_out_mat.elements, d_out_mat.elements, 64 * 1024 * 1024 * sizeof(double), cudaMemcpyDeviceToHost);
-    double checksum = 0;
-    for(int i = 0; i < 64 * 1024 * 1024; i++){
-        checksum += h_out_mat.elements[i];
-    }
-    printf("checksum: %f\n", checksum);
-    //PrintChannel(h_out_mat, 0);
-    return 0 ;
+    // // 
+    // dim3 dimBlock(1024);
+    // dim3 dimGrid(64,1024);
+    // NaiveConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
+    // cudaDeviceSynchronize();
+    // cudaMemcpy(h_out_mat.elements, d_out_mat.elements, 64 * 1024 * 1024 * sizeof(double), cudaMemcpyDeviceToHost);
+    // double checksum = 0;
+    // for(int i = 0; i < 64 * 1024 * 1024; i++){
+    //     checksum += h_out_mat.elements[i];
+    // }
+    // printf("checksum: %f\n", checksum);
+    // //PrintChannel(h_out_mat, 0);
+    // return 0 ;
 }
