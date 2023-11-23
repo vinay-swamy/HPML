@@ -15,7 +15,7 @@ OPTIONS   :=  -O3
 #--maxrregcount=100 --ptxas-options -v 
 
 TAR_FILE_NAME  := YourNameCUDA1.tar
-EXECS :=  matmult00 matmult01
+EXECS := vecadd00 vecadd01 matmult00 matmult01
 all:$(EXECS)
 
 #######################################################################
