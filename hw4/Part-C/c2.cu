@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "timer.h"
 
 struct Matrix {
   int channels;
@@ -202,26 +203,26 @@ __global__ void TiledConvKernel(Matrix M, Filter F, Matrix O){
             }
         }
     }
-    __syncthreads();
-    __shared__ double shared_Fsub[64*3*3*3];
-    // similar to above, but
-    for( int i =0; i<2; i++){
-        int flat_thread_index = thread_row * 30 + thread_col  + i*(30*30);
-        if (flat_thread_index < 64*3*3*3){
-            
-            shared_Fsub[flat_thread_index] = F.weights[flat_thread_index];
-        }
+
+    __shared__ double shared_Fsub[3*3*3];
+    //each block reads in a single filter.
+    // we have 27 elements in the filter, so can simply read the filter in as a flat array, 
+    // and have each thread read in a single element, and have the rest of the threads chill
+    int flat_thread_index = thread_row * 30 + thread_col;
+    if (flat_thread_index < 3*3*3){
+        shared_Fsub[flat_thread_index] = F.weights[c_out_channel * (3*3*3) + flat_thread_index];
     }
+
     __syncthreads();
 
     double sum = 0;
     for( int c = 0; c < 3 ;c++){
         for (int x = 0; x < 3; x++){
             for (int y = 0; y < 3 ; y++){
-                //c_out_channel * (3*3*3) + c * (3*3) + x * 3 +y
-                //         nfilter          inchannel   row   col      
+                //c * (3*3) + x * 3 +y
+                //inchannel   row   col      
                 if (global_row < 1024 && global_col < 1024){ //  only update if in bounds
-                    double weight = shared_Fsub[c_out_channel * (3*3*3) + c * (3*3) + x * 3 +y];
+                    double weight = shared_Fsub[c * (3*3) + x * 3 +y];
                     //c*(32*32) + (thread_row + x) * 32 + (thread_col + y)
                     //c*(32*32) right channel 
                     //(thread_row + x) - thread row takes us to the right row, and then x takes us to the right row in the filter operation
@@ -257,14 +258,22 @@ int main(int argc, char *argv[]){
     dim3 dimBlock(30,30);
     //1024/30 = 34.13 ~ 35
     dim3 dimGrid(35,35,64);
+    //warmup
     TiledConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
     cudaDeviceSynchronize();
+    // run for real 
+    initialize_timer();
+    start_timer();
+    TiledConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
+    cudaThreadSynchronize() ;
+    stop_timer();
+    double time = elapsed_time();
     cudaMemcpy(h_out_mat.elements, d_out_mat.elements, 64 * 1024 * 1024 * sizeof(double), cudaMemcpyDeviceToHost);
     double checksum = 0;
     for(int i = 0; i < 64 * 1024 * 1024; i++){
         checksum += h_out_mat.elements[i];
     }
-    printf("checksum: %f\n", checksum);
+    printf("%.1f, %.3f\n", checksum, time*1000);
     //int cout_channel = std::atoi(argv[1]);
     //PrintChannel(h_out_mat, cout_channel );
     return 0 ;

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "timer.h"
 
 struct Matrix {
   int channels;
@@ -134,28 +135,28 @@ Filter MakeHostFilter(int c_in, int k_out, int fw, int fh){
     return newHostFilter;
 }
 
-void PrintChannel(Matrix M, int channel ){
-    int grid_size = M.width * M.height;
-    for(int x= 0; x < M.height; x++){
-        for(int y=0; y < M.width; y++){
-            printf("%.0f,", M.elements[grid_size* channel + x * M.width + y]);
-        }
-        printf("\n");
-    }
-}
+// void PrintChannel(Matrix M, int channel ){
+//     int grid_size = M.width * M.height;
+//     for(int x= 0; x < M.height; x++){
+//         for(int y=0; y < M.width; y++){
+//             printf("%.0f,", M.elements[grid_size* channel + x * M.width + y]);
+//         }
+//         printf("\n");
+//     }
+// }
 
-void PrintFilter(Filter F, int k ){
-    int grid_size = F.fw * F.fh;
-    for (int c=0; c < F.c; c++){
-        printf("FChannel: %d\n", c);
-        for (int i=0; i < F.fh; i++){
-            for (int j=0; j < F.fw; j++){
-                printf("%.0f,", F.weights[k * F.c * grid_size + c * grid_size + i * F.fw + j]);
-            }
-            printf("\n");
-        }
-    }
-}
+// void PrintFilter(Filter F, int k ){
+//     int grid_size = F.fw * F.fh;
+//     for (int c=0; c < F.c; c++){
+//         printf("FChannel: %d\n", c);
+//         for (int i=0; i < F.fh; i++){
+//             for (int j=0; j < F.fw; j++){
+//                 printf("%.0f,", F.weights[k * F.c * grid_size + c * grid_size + i * F.fw + j]);
+//             }
+//             printf("\n");
+//         }
+//     }
+// }
 
 __global__ void NaiveConvKernel(Matrix M, Filter F, Matrix O){
     /*
@@ -164,8 +165,6 @@ __global__ void NaiveConvKernel(Matrix M, Filter F, Matrix O){
     
     */
 
-    int matrix_width = M.width;
-    int matrix_height = M.height;
     int row_idx = blockIdx.y; 
     int col_idx = threadIdx.x;
     int c_out_idx = blockIdx.x;
@@ -177,18 +176,6 @@ __global__ void NaiveConvKernel(Matrix M, Filter F, Matrix O){
     double* Fsub;
     Msub = &M.elements[row_idx * M.width + col_idx];// only need to worry about getting into the first channel 
     Fsub = &F.weights[c_out_idx * elem_per_filter ]; //only need to get to start of right out channel
-    // if(c_out_idx == 0 && row_idx == 0 && col_idx == 0){
-    //      for (int c = 0; c < 3; c++){
-    //         printf("MChannel: %d\n", c);
-    //         for (int i = 0; i < 3; i++){
-    //             for (int j = 0; j < 3; j++){
-    //             printf("%.0f,", Msub[c * (1026*1026) + i * 1026 + j]);
-    //             }
-    //             printf("\n");
-    //         }
-    //      }
-    // };
-
     
     double sum = 0;
     for (int c = 0; c < 3 ; c++){
@@ -208,28 +195,36 @@ __global__ void NaiveConvKernel(Matrix M, Filter F, Matrix O){
 
 
 int main(){
+    // borrowed timing code from Part A
     Matrix h_mat = MakeHostMatrix(3, 1024, 1024, false);
     Matrix h_padded_mat = PadMatrix(h_mat, 1);
     Matrix h_out_mat = MakeHostMatrix(64, 1024, 1024, true);
     Filter h_filt = MakeHostFilter(3, 64, 3, 3);
     
-    PrintChannel(h_mat, 2);
+    //PrintChannel(h_mat, 2);
 
-    // Matrix d_mat = MakeDeviceMatrix(h_padded_mat, true);
-    // Filter d_filt = MakeDeviceFilter(h_filt, true);
-    // Matrix d_out_mat = MakeDeviceMatrix(h_out_mat, false);
-    
-    // // 
-    // dim3 dimBlock(1024);
-    // dim3 dimGrid(64,1024);
-    // NaiveConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
-    // cudaDeviceSynchronize();
-    // cudaMemcpy(h_out_mat.elements, d_out_mat.elements, 64 * 1024 * 1024 * sizeof(double), cudaMemcpyDeviceToHost);
-    // double checksum = 0;
-    // for(int i = 0; i < 64 * 1024 * 1024; i++){
-    //     checksum += h_out_mat.elements[i];
-    // }
-    // printf("checksum: %f\n", checksum);
-    // //PrintChannel(h_out_mat, 0);
-    // return 0 ;
+    Matrix d_mat = MakeDeviceMatrix(h_padded_mat, true);
+    Filter d_filt = MakeDeviceFilter(h_filt, true);
+    Matrix d_out_mat = MakeDeviceMatrix(h_out_mat, false);
+    dim3 dimBlock(1024);
+    dim3 dimGrid(64,1024);
+    // warmup
+    NaiveConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
+    cudaDeviceSynchronize();
+
+    // run for real 
+    initialize_timer();
+    start_timer();
+    NaiveConvKernel<<<dimGrid, dimBlock>>>(d_mat, d_filt, d_out_mat);
+    cudaThreadSynchronize() ;
+    stop_timer();
+    double time = elapsed_time();
+    cudaMemcpy(h_out_mat.elements, d_out_mat.elements, 64 * 1024 * 1024 * sizeof(double), cudaMemcpyDeviceToHost);
+    double checksum = 0;
+    for(int i = 0; i < 64 * 1024 * 1024; i++){
+        checksum += h_out_mat.elements[i];
+    }
+    printf("%.1f, %.3f\n", checksum, time*1000);
+    //PrintChannel(h_out_mat, 0);
+    return 0 ;
 }
